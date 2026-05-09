@@ -6,6 +6,32 @@
     <title>Aathirai Arakkattalai — Premium Academy Portal</title>
     <link rel="icon" type="image/png" href="asset/logo.png" style="width: 50px; height: 50px;">
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+        import { getDatabase, ref, set, onValue, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-oSho_BT1k0qu5kqQugNk522zU78Nd88",
+            authDomain: "aathirai-18454.firebaseapp.com",
+            projectId: "aathirai-18454",
+            storageBucket: "aathirai-18454.firebasestorage.app",
+            messagingSenderId: "175824330407",
+            appId: "1:175824330407:web:5ab432f3b5bea0c7764582",
+            measurementId: "G-F3LF7VJ9RG",
+            databaseURL: "https://aathirai-18454-default-rtdb.asia-southeast1.firebasedatabase.app"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getDatabase(app);
+
+        // Make firebase available globally for script.js
+        window.firebaseDB = db;
+        window.rtDB = { ref, set, onValue, push };
+    </script>
 </head>
 <body>
     <!-- Mobile Navigation Toggle -->
@@ -217,13 +243,31 @@
                 
                 <div class="card" style="margin-bottom: 24px; padding: 16px 24px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap;">
-                        <div class="filter-tabs" id="studentFilterTabs" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;">
-                            <button class="filter-tab active" data-filter="all">All</button>
-                            <button class="filter-tab" data-filter="Tuition">Tuition</button>
-                            <button class="filter-tab" data-filter="Computer">Computer</button>
-                            <button class="filter-tab" data-filter="Both">Both</button>
-                            <button class="filter-tab" data-filter="paid">Paid</button>
-                            <button class="filter-tab" data-filter="unpaid">Unpaid</button>
+                        <div class="filter-tabs" id="studentFilterTabs" style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;">
+                            <button class="filter-tab active" data-filter="all">
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                                All
+                            </button>
+                            <button class="filter-tab tuition" data-filter="Tuition">
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                                Tuition
+                            </button>
+                            <button class="filter-tab computer" data-filter="Computer">
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                                Computer
+                            </button>
+                            <button class="filter-tab both" data-filter="Both">
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                                Both
+                            </button>
+                            <button class="filter-tab paid" data-filter="paid">
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="3" fill="none"><polyline points="20 6 9 17 4 12"/></svg>
+                                Paid
+                            </button>
+                            <button class="filter-tab unpaid" data-filter="unpaid">
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="3" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                Unpaid
+                            </button>
                         </div>
                         <div style="flex-grow: 1; min-width: 200px; position: relative;">
                             <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-dim);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>

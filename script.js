@@ -835,7 +835,31 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDashboardStats();
     renderStudents();
     renderDashboardChart();
+    
+    // Also sync to Firebase for real-time backup
+    syncAllToFirebase();
+}
 
+async function syncAllToFirebase() {
+    if (!window.firebaseDB) return;
+    const { ref, set } = window.rtDB;
+    const db = window.firebaseDB;
+
+    try {
+        // Sync Students
+        await set(ref(db, 'students'), state.students);
+
+        // Sync Staff
+        await set(ref(db, 'staff'), state.staff);
+
+        // Sync Transactions
+        await set(ref(db, 'transactions'), state.transactions);
+
+        console.log("Firebase RTDB Sync Complete");
+    } catch (error) {
+        console.error("Firebase RTDB Sync Error:", error);
+    }
+}
     // Session Type Change Listener
     const sessionInput = document.getElementById('studentSessionInput');
     if (sessionInput) {
@@ -965,11 +989,13 @@ function collectFee(studentId) {
 
     logActivity(`Collected ₹${amount} fee from ${student.name}`);
     
-    // Sync with Google Sheets (Backend already handles student updates)
-    syncWithGoogleSheets({
-        action: 'update_student',
-        student: student
-    });
+    // Firebase Sync
+    if (window.firebaseDB) {
+        const { ref, set } = window.rtDB;
+        const db = window.firebaseDB;
+        set(ref(db, 'students'), state.students);
+        set(ref(db, 'transactions'), state.transactions);
+    }
 
     renderStudents();
     updateDashboardStats();
