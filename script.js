@@ -6,7 +6,15 @@ const getTodayDate = () => new Date().toISOString().split('T')[0];
 
 const saveState = () => {
     localStorage.setItem('academyHubState', JSON.stringify(state));
+    if (window.firebaseDB) {
+        syncAllToFirebase();
+    }
 };
+
+const saveStateLocalOnly = () => {
+    localStorage.setItem('academyHubState', JSON.stringify(state));
+};
+
 
 const syncAllStudents = () => {
     // Send all student records to Google Sheets for initial sync
@@ -402,10 +410,7 @@ function renderStudents() {
                 ${student.startTime || '--:--'} - ${student.endTime || '--:--'}
                 ${student.session === 'Both' ? `<br><span style="color:var(--text-dim)">${student.startTime2 || '--:--'} - ${student.endTime2 || '--:--'}</span>` : ''}
             </td>
-            <td style="font-size: 0.8rem; font-weight: 500; color: var(--primary);">
-                ${student.startTime || '--:--'} - ${student.endTime || '--:--'}
-                ${student.session === 'Both' ? `<br><span style="color:var(--text-dim)">${student.startTime2 || '--:--'} - ${student.endTime2 || '--:--'}</span>` : ''}
-            </td>
+
             <td>
                 <span class="status-pill ${student.status.toLowerCase()}">${student.status}</span>
                 <br>
@@ -776,54 +781,63 @@ function viewStudentDetail(id) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Check if user is logged in
-    const isLoggedIn = sessionStorage.getItem('academyHubLoggedIn');
-    const userRole = sessionStorage.getItem('academyHubUserRole');
-    
-    if (isLoggedIn === 'true') {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('appContainer').style.display = 'flex';
-        applyRoleRestrictions(userRole);
+    // --- FIREBASE AUTH STATE LISTENER ---
+    if (window.firebaseAuth) {
+        const { onAuthStateChanged } = window.authMethods;
+        onAuthStateChanged(window.firebaseAuth, (user) => {
+            if (user) {
+                // User is signed in
+                const role = user.email.toLowerCase().includes('admin') ? 'admin' : 'staff';
+                sessionStorage.setItem('academyHubLoggedIn', 'true');
+                sessionStorage.setItem('academyHubUserRole', role);
+                
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'flex';
+                applyRoleRestrictions(role);
+                
+                const startSection = role === 'staff' ? 'attendance' : (state.currentSection || 'attendance');
+                switchSection(startSection);
+            } else {
+                // User is signed out
+                sessionStorage.removeItem('academyHubLoggedIn');
+                sessionStorage.removeItem('academyHubUserRole');
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('appContainer').style.display = 'none';
+            }
+        });
     }
+
 
     // Login Form Handler
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
-        loginForm.addEventListener('submit', (e) => {
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const user = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
+            const submitBtn = loginForm.querySelector('button[type="submit"]');
 
-            let role = '';
-            if (user === 'admin' && pass === 'admin') {
-                role = 'admin';
-            } else if (user === 'staff' && pass === 'staff') {
-                role = 'staff';
-            }
+            if (window.firebaseAuth) {
+                const { signInWithEmailAndPassword } = window.authMethods;
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'Signing in...';
 
-            if (role) {
-                sessionStorage.setItem('academyHubLoggedIn', 'true');
-                sessionStorage.setItem('academyHubUserRole', role);
-                
-                // Animate out login screen
-                const loginScreen = document.getElementById('loginScreen');
-                loginScreen.style.opacity = '0';
-                loginScreen.style.transition = 'opacity 0.5s ease';
-                
-                setTimeout(() => {
-                    loginScreen.style.display = 'none';
-                    document.getElementById('appContainer').style.display = 'flex';
-                    applyRoleRestrictions(role);
-                    
-                    // Default view for staff is attendance
-                    const startSection = role === 'staff' ? 'attendance' : (state.currentSection || 'attendance');
-                    switchSection(startSection);
-                }, 500);
+                try {
+                    await signInWithEmailAndPassword(window.firebaseAuth, email, pass);
+                    // onAuthStateChanged will handle the rest
+                } catch (error) {
+                    console.error("Login Error:", error);
+                    alert('Login Failed: ' + error.message);
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = 'Sign In';
+                }
             } else {
-                alert('Invalid username or password');
+                // Fallback for demo if Firebase fails to load
+                alert('Firebase Authentication not initialized.');
             }
         });
     }
+
 
     // Ensure any new students added before load are synced
     if (!localStorage.getItem('academyHubState')) {
@@ -837,29 +851,42 @@ document.addEventListener('DOMContentLoaded', () => {
     renderDashboardChart();
     
     // Also sync to Firebase for real-time backup
-    syncAllToFirebase();
-}
-
-async function syncAllToFirebase() {
-    if (!window.firebaseDB) return;
-    const { ref, set } = window.rtDB;
-    const db = window.firebaseDB;
-
-    try {
-        // Sync Students
-        await set(ref(db, 'students'), state.students);
-
-        // Sync Staff
-        await set(ref(db, 'staff'), state.staff);
-
-        // Sync Transactions
-        await set(ref(db, 'transactions'), state.transactions);
-
-        console.log("Firebase RTDB Sync Complete");
-    } catch (error) {
-        console.error("Firebase RTDB Sync Error:", error);
+    if (window.firebaseDB) {
+        const { ref, onValue } = window.rtDB;
+        const db = window.firebaseDB;
+        
+        // Listen for remote changes
+        onValue(ref(db), (snapshot) => {
+            const remoteData = snapshot.val();
+            if (remoteData) {
+                let changed = false;
+                if (remoteData.students && JSON.stringify(remoteData.students) !== JSON.stringify(state.students)) {
+                    state.students = remoteData.students;
+                    changed = true;
+                }
+                if (remoteData.staff && JSON.stringify(remoteData.staff) !== JSON.stringify(state.staff)) {
+                    state.staff = remoteData.staff;
+                    changed = true;
+                }
+                if (remoteData.transactions && JSON.stringify(remoteData.transactions) !== JSON.stringify(state.transactions)) {
+                    state.transactions = remoteData.transactions;
+                    changed = true;
+                }
+                
+                if (changed) {
+                    saveStateLocalOnly();
+                    renderStudents();
+                    renderStaff();
+                    renderAttendanceSheet();
+                    updateDashboardStats();
+                }
+            }
+        });
+    } else {
+        // Fallback or initial sync if no remote data
+        syncAllToFirebase();
     }
-}
+
     // Session Type Change Listener
     const sessionInput = document.getElementById('studentSessionInput');
     if (sessionInput) {
@@ -954,10 +981,20 @@ function downloadMonthlyAttendance() {
 }
 
 function logout() {
-    sessionStorage.removeItem('academyHubLoggedIn');
-    sessionStorage.removeItem('academyHubUserRole');
-    location.reload();
+    if (window.firebaseAuth) {
+        const { signOut } = window.authMethods;
+        signOut(window.firebaseAuth).then(() => {
+            sessionStorage.removeItem('academyHubLoggedIn');
+            sessionStorage.removeItem('academyHubUserRole');
+            location.reload();
+        });
+    } else {
+        sessionStorage.removeItem('academyHubLoggedIn');
+        sessionStorage.removeItem('academyHubUserRole');
+        location.reload();
+    }
 }
+
 
 function isFeePaid(student) {
     const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
@@ -989,17 +1026,10 @@ function collectFee(studentId) {
 
     logActivity(`Collected ₹${amount} fee from ${student.name}`);
     
-    // Firebase Sync
-    if (window.firebaseDB) {
-        const { ref, set } = window.rtDB;
-        const db = window.firebaseDB;
-        set(ref(db, 'students'), state.students);
-        set(ref(db, 'transactions'), state.transactions);
-    }
-
     renderStudents();
     updateDashboardStats();
     saveState();
+
 }
 
 function applyRoleRestrictions(role) {
@@ -1036,6 +1066,27 @@ function resetFinancialData() {
         saveState();
         updateDashboardStats();
         if (state.currentSection === 'finance') renderFinance();
-        alert("Financial data has been reset.");
     }
 }
+
+async function syncAllToFirebase() {
+    if (!window.firebaseDB) return;
+    const { ref, set } = window.rtDB;
+    const db = window.firebaseDB;
+
+    try {
+        // Sync Students
+        await set(ref(db, 'students'), state.students);
+
+        // Sync Staff
+        await set(ref(db, 'staff'), state.staff);
+
+        // Sync Transactions
+        await set(ref(db, 'transactions'), state.transactions);
+
+        console.log("Firebase RTDB Sync Complete");
+    } catch (error) {
+        console.error("Firebase RTDB Sync Error:", error);
+    }
+}
+

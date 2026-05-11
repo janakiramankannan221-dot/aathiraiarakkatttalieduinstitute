@@ -12,6 +12,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
         import { getDatabase, ref, set, onValue, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA-oSho_BT1k0qu5kqQugNk522zU78Nd88",
@@ -27,11 +28,15 @@
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
         const db = getDatabase(app);
+        const auth = getAuth(app);
 
         // Make firebase available globally for script.js
         window.firebaseDB = db;
         window.rtDB = { ref, set, onValue, push };
+        window.firebaseAuth = auth;
+        window.authMethods = { signInWithEmailAndPassword, onAuthStateChanged, signOut };
     </script>
+
 </head>
 <body>
     <!-- Mobile Navigation Toggle -->
@@ -62,9 +67,10 @@
             </div>
             <form id="loginForm">
                 <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="username" class="form-input" placeholder="Enter username" required>
+                    <label>Email Address</label>
+                    <input type="email" id="email" class="form-input" placeholder="admin@example.com" required>
                 </div>
+
                 <div class="form-group">
                     <label>Password</label>
                     <input type="password" id="password" class="form-input" placeholder="••••••••" required>
