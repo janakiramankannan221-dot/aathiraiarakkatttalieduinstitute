@@ -780,9 +780,10 @@ function viewStudentDetail(id) {
     document.getElementById('detailEditBtn').onclick = () => editStudent(student.id);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// --- Firebase initialization (called when Firebase module is ready) ---
+function initFirebase() {
     // --- FIREBASE AUTH STATE LISTENER ---
-    if (window.firebaseAuth) {
+    if (window.firebaseAuth && window.authMethods) {
         const { onAuthStateChanged } = window.authMethods;
         onAuthStateChanged(window.firebaseAuth, (user) => {
             if (user) {
@@ -805,53 +806,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('appContainer').style.display = 'none';
             }
         });
+        console.log('Firebase Auth initialized successfully.');
     }
 
-
-    // Login Form Handler
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
-            const submitBtn = loginForm.querySelector('button[type="submit"]');
-
-            if (window.firebaseAuth) {
-                const { signInWithEmailAndPassword } = window.authMethods;
-                submitBtn.disabled = true;
-                submitBtn.innerText = 'Signing in...';
-
-                try {
-                    await signInWithEmailAndPassword(window.firebaseAuth, email, pass);
-                    // onAuthStateChanged will handle the rest
-                } catch (error) {
-                    console.error("Login Error:", error);
-                    alert('Login Failed: ' + error.message);
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = 'Sign In';
-                }
-            } else {
-                // Fallback for demo if Firebase fails to load
-                alert('Firebase Authentication not initialized.');
-            }
-        });
-    }
-
-
-    // Ensure any new students added before load are synced
-    if (!localStorage.getItem('academyHubState')) {
-        syncAllStudents();
-        syncAllStaff();
-    }
-    switchSection(state.currentSection || 'attendance');
-    autoPurgeAttendance();
-    updateDashboardStats();
-    renderStudents();
-    renderDashboardChart();
-    
-    // Also sync to Firebase for real-time backup
-    if (window.firebaseDB) {
+    // Setup Firebase Realtime DB sync
+    if (window.firebaseDB && window.rtDB) {
         const { ref, onValue } = window.rtDB;
         const db = window.firebaseDB;
         
@@ -882,9 +841,67 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+        console.log('Firebase Realtime DB listener initialized.');
     } else {
         // Fallback or initial sync if no remote data
         syncAllToFirebase();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Login Form Handler — always attach, it will wait for Firebase internally
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            const submitBtn = loginForm.querySelector('button[type="submit"]');
+
+            if (window.firebaseAuth && window.authMethods) {
+                const { signInWithEmailAndPassword } = window.authMethods;
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'Signing in...';
+
+                try {
+                    await signInWithEmailAndPassword(window.firebaseAuth, email, pass);
+                    // onAuthStateChanged will handle the rest
+                } catch (error) {
+                    console.error("Login Error:", error);
+                    alert('Login Failed: ' + error.message);
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = 'Sign In';
+                }
+            } else {
+                // Firebase hasn't loaded yet — show a helpful message
+                alert('Firebase is still loading. Please wait a moment and try again.');
+            }
+        });
+    }
+
+
+    // Ensure any new students added before load are synced
+    if (!localStorage.getItem('academyHubState')) {
+        syncAllStudents();
+        syncAllStaff();
+    }
+    switchSection(state.currentSection || 'attendance');
+    autoPurgeAttendance();
+    updateDashboardStats();
+    renderStudents();
+    renderDashboardChart();
+    
+    // Initialize Firebase — handles race condition with module script on GitHub Pages
+    // If Firebase module already loaded (fast connection / localhost), init immediately.
+    // Otherwise, wait for the 'firebaseReady' event dispatched by the module.
+    if (window.firebaseAuth) {
+        initFirebase();
+    } else {
+        console.log('Waiting for Firebase module to load...');
+        window.addEventListener('firebaseReady', () => {
+            console.log('Firebase module loaded — initializing...');
+            initFirebase();
+        });
     }
 
     // Session Type Change Listener

@@ -35,6 +35,9 @@
         window.rtDB = { ref, set, onValue, push };
         window.firebaseAuth = auth;
         window.authMethods = { signInWithEmailAndPassword, onAuthStateChanged, signOut };
+
+        // Signal that Firebase is ready — fixes GitHub Pages race condition
+        window.dispatchEvent(new CustomEvent('firebaseReady'));
     </script>
 
 </head>
@@ -749,6 +752,6 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js" defer></script>
 </body>
 </html>
