@@ -791,6 +791,7 @@ function viewStudentDetail(id) {
 
 // --- Firebase initialization (called when Firebase module is ready) ---
 function initFirebase() {
+    console.log("Firebase Init Started...");
     // --- FIREBASE AUTH STATE LISTENER ---
     if (window.firebaseAuth && window.authMethods) {
         const { onAuthStateChanged } = window.authMethods;
@@ -924,6 +925,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const googleLoginBtn = document.getElementById('googleLoginBtn');
     if (googleLoginBtn) {
         googleLoginBtn.addEventListener('click', async () => {
+            console.log("Google Login Button Clicked");
             if (window.firebaseAuth && window.authMethods && window.googleProvider) {
                 const { signInWithPopup } = window.authMethods;
                 try {
