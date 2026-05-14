@@ -99,12 +99,13 @@ function updateDashboardStats() {
     if (staffCount) staffCount.innerText = state.staff.length.toLocaleString();
 
     const todayKey = getTodayDate();
-    const presentCount = state.students.filter(s => {
+    const activeStudentsToday = state.students.filter(s => s.status !== 'Discontinued');
+    const presentCount = activeStudentsToday.filter(s => {
         let rec = s.attendanceHistory ? s.attendanceHistory[todayKey] : null;
         let status = (typeof rec === 'object' && rec !== null) ? rec.status : rec;
         return status === 'P';
     }).length;
-    const total = state.students.length;
+    const total = activeStudentsToday.length;
     const percentage = total > 0 ? Math.round((presentCount / total) * 100) : 0;
     if (avgAttendance) avgAttendance.innerText = percentage + '%';
 
@@ -259,9 +260,17 @@ function renderAttendanceSheet() {
     const dateLabel = document.getElementById('attendanceDate');
     if (dateLabel) dateLabel.innerText = displayDate;
 
-    const activeStudents = state.students.filter(s => s.status !== 'Discontinued');
-    const todayKey = state.viewingDate;
-    container.innerHTML = activeStudents.map(student => {
+    // Filter students: Include if active OR if they have a record for this specific date (historical view)
+    const studentsForDate = state.students.filter(s => {
+        const isCurrentlyActive = s.status !== 'Discontinued';
+        const hasRecordForDate = s.attendanceHistory && s.attendanceHistory[viewingDate];
+        const joinedOnOrBefore = s.joinDate ? s.joinDate <= viewingDate : true;
+        
+        return hasRecordForDate || (isCurrentlyActive && joinedOnOrBefore);
+    });
+
+    const todayKey = viewingDate;
+    container.innerHTML = studentsForDate.map(student => {
         const record = state.pendingAttendance[student.id] || (student.attendanceHistory && student.attendanceHistory[todayKey]);
         const status = (typeof record === 'object' && record !== null) ? record.status : (record || '');
         const timeStr = (typeof record === 'object' && record !== null && record.time) ? record.time : '--:--';
@@ -291,13 +300,13 @@ function renderAttendanceSheet() {
         </tr>
     `;}).join('');
 
-    const presentCount = activeStudents.filter(s => {
+    const presentCount = studentsForDate.filter(s => {
         let rec = state.pendingAttendance[s.id] || (s.attendanceHistory && s.attendanceHistory[todayKey]);
         let status = (typeof rec === 'object' && rec !== null) ? rec.status : (rec || '');
         return status === 'P';
     }).length;
 
-    const total = activeStudents.length;
+    const total = studentsForDate.length;
     const percentage = total > 0 ? Math.round((presentCount / total) * 100) : 0;
     if (todayPresence) todayPresence.innerText = percentage + '%';
 
@@ -785,19 +794,45 @@ function initFirebase() {
     // --- FIREBASE AUTH STATE LISTENER ---
     if (window.firebaseAuth && window.authMethods) {
         const { onAuthStateChanged } = window.authMethods;
-        onAuthStateChanged(window.firebaseAuth, (user) => {
+                onAuthStateChanged(window.firebaseAuth, (user) => {
             if (user) {
-                // User is signed in
-                const role = user.email.toLowerCase().includes('admin') ? 'admin' : 'staff';
-                sessionStorage.setItem('academyHubLoggedIn', 'true');
-                sessionStorage.setItem('academyHubUserRole', role);
-                
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('appContainer').style.display = 'flex';
-                applyRoleRestrictions(role);
-                
-                const startSection = role === 'staff' ? 'attendance' : (state.currentSection || 'attendance');
-                switchSection(startSection);
+                try {
+                    // User is signed in
+                    const adminEmails = ['admin@gmail.com', 'aathirai@gmail.com']; // Add specific admin emails here
+                    const userEmail = user.email.toLowerCase();
+                    const isAdmin = (userEmail.includes('admin') || adminEmails.includes(userEmail));
+                    
+                    // ENFORCE: Google Sign-in ONLY for Admins
+                    const isGoogle = user.providerData.some(p => p.providerId === 'google.com');
+                    if (isGoogle && !isAdmin) {
+                        alert('Access Denied: Google Sign-In is restricted to administrators only. Please use the authorized administrator email.');
+                        window.authMethods.signOut(window.firebaseAuth);
+                        return;
+                    }
+
+                    const role = isAdmin ? 'admin' : 'staff';
+                    
+                    sessionStorage.setItem('academyHubLoggedIn', 'true');
+                    sessionStorage.setItem('academyHubUserRole', role);
+                    sessionStorage.setItem('academyHubUserEmail', user.email);
+                    
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('appContainer').style.display = 'flex';
+                    applyRoleRestrictions(role, user.email);
+                    
+                    const startSection = role === 'staff' ? 'attendance' : (state.currentSection || 'attendance');
+                    switchSection(startSection);
+                } catch (err) {
+                    alert('Error loading application data: ' + err.message);
+                    console.error(err);
+                    
+                    // Reset login button if it got stuck
+                    const submitBtn = document.querySelector('#loginForm button[type="submit"]');
+                    if(submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = 'Sign In';
+                    }
+                }
             } else {
                 // User is signed out
                 sessionStorage.removeItem('academyHubLoggedIn');
@@ -866,6 +901,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     await signInWithEmailAndPassword(window.firebaseAuth, email, pass);
                     // onAuthStateChanged will handle the rest
+                    // We reset the button text immediately just in case the UI fails to switch
+                    submitBtn.innerText = 'Success!';
                 } catch (error) {
                     console.error("Login Error:", error);
                     alert('Login Failed: ' + error.message);
@@ -878,6 +915,36 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Google Login Handler
+    const googleLoginBtn = document.getElementById('googleLoginBtn');
+    if (googleLoginBtn) {
+        googleLoginBtn.addEventListener('click', async () => {
+            if (window.firebaseAuth && window.authMethods && window.googleProvider) {
+                const { signInWithPopup } = window.authMethods;
+                try {
+                    googleLoginBtn.disabled = true;
+                    googleLoginBtn.innerText = 'Connecting...';
+                    
+                    await signInWithPopup(window.firebaseAuth, window.googleProvider);
+                    // onAuthStateChanged in initFirebase will handle the UI switch
+                } catch (error) {
+                    console.error("Google Login Error:", error);
+                    if (error.code !== 'auth/popup-closed-by-user') {
+                        alert('Google Sign-In Failed: ' + error.message);
+                    }
+                    googleLoginBtn.disabled = false;
+                    googleLoginBtn.innerHTML = `
+                        <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/><path fill="none" d="M1 1 23 23"/></svg>
+                        Continue with Google
+                    `;
+                }
+            } else {
+                alert('Firebase is still loading. Please wait a moment.');
+            }
+        });
+    }
+
 
 
     // Ensure any new students added before load are synced
@@ -1003,11 +1070,13 @@ function logout() {
         signOut(window.firebaseAuth).then(() => {
             sessionStorage.removeItem('academyHubLoggedIn');
             sessionStorage.removeItem('academyHubUserRole');
+            sessionStorage.removeItem('academyHubUserEmail');
             location.reload();
         });
     } else {
         sessionStorage.removeItem('academyHubLoggedIn');
         sessionStorage.removeItem('academyHubUserRole');
+        sessionStorage.removeItem('academyHubUserEmail');
         location.reload();
     }
 }
@@ -1049,14 +1118,15 @@ function collectFee(studentId) {
 
 }
 
-function applyRoleRestrictions(role) {
+function applyRoleRestrictions(role, email) {
     const isAdmin = role === 'admin';
+    const userEmail = email || sessionStorage.getItem('academyHubUserEmail') || '';
     
     // Update profile UI
     const nameEl = document.getElementById('displayName');
     const roleEl = document.getElementById('displayRole');
-    if (nameEl) nameEl.innerText = isAdmin ? 'Dr. Sarah Jenkins' : 'Portal Staff';
-    if (roleEl) roleEl.innerText = isAdmin ? 'Administrator' : 'Staff Member';
+    if (nameEl) nameEl.innerText = userEmail || (isAdmin ? 'Administrator' : 'Portal Staff');
+    if (roleEl) roleEl.innerText = isAdmin ? 'System Administrator' : 'Staff Member';
 
     // Navigation restrictions
     const restrictedSections = ['dashboard', 'staff', 'finance', 'reports', 'settings', 'archive'];
