@@ -798,14 +798,18 @@ function initFirebase() {
             if (user) {
                 try {
                     // User is signed in
+                    console.log("User detected:", user.email);
                     const adminEmails = ['admin@gmail.com', 'aathirai@gmail.com']; // Add specific admin emails here
                     const userEmail = user.email.toLowerCase();
                     const isAdmin = (userEmail.includes('admin') || adminEmails.includes(userEmail));
                     
+                    console.log("Is Admin:", isAdmin);
+
                     // ENFORCE: Google Sign-in ONLY for Admins
                     const isGoogle = user.providerData.some(p => p.providerId === 'google.com');
                     if (isGoogle && !isAdmin) {
-                        alert('Access Denied: Google Sign-In is restricted to administrators only. Please use the authorized administrator email.');
+                        console.warn("Access Denied: Non-admin Google account.");
+                        alert('Access Denied: This Google account (' + user.email + ') is not authorized as an administrator.');
                         window.authMethods.signOut(window.firebaseAuth);
                         return;
                     }
