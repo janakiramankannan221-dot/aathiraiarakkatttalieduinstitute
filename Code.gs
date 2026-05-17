@@ -4,16 +4,12 @@ const SPREADSHEET_ID = '1XeolmWhmVF6YcJXq0GhgXD1YUC5po_DWGIoTflXNokI';
 // Enable CORS for the web app
 function doOptions(e) {
   return ContentService.createTextOutput('')
-    .setMimeType(ContentService.MimeType.JSON)
-    .setHeader('Access-Control-Allow-Origin', '*')
-    .setHeader('Access-Control-Allow-Methods', 'POST')
-    .setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    .setMimeType(ContentService.MimeType.TEXT);
 }
 
 function doGet(e) {
   return ContentService.createTextOutput(JSON.stringify({ message: 'GET not supported' }))
-    .setMimeType(ContentService.MimeType.JSON)
-    .setHeader('Access-Control-Allow-Origin', '*');
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
@@ -58,12 +54,10 @@ function doPost(e) {
     }
 
     return ContentService.createTextOutput(JSON.stringify(result))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeader('Access-Control-Allow-Origin', '*');
+      .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.message }))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeader('Access-Control-Allow-Origin', '*');
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }
 

@@ -1,5 +1,5 @@
 // --- CONFIG ---
-const webAppUrl = 'https://script.google.com/macros/s/AKfycbwyLBLi29sH7uGXbI6BCs_MRDq04r4SErAl3gRgrOOW1cyzxYulVuPtVgMOr1Tq5pS1/exec';
+const webAppUrl = 'https://script.google.com/macros/s/AKfycbxrLSl2CHVeuOrqKRxPiexZfzCSq5bqfkQZRFD1ooUCjI18TQFwfXpDRqKwvaCtEGT_/exec';
 
 // --- LOCAL AUTH CREDENTIALS ---
 const AUTH_CONFIG = {
@@ -40,8 +40,6 @@ const syncWithGoogleSheets = (data) => {
   if (!webAppUrl) return;
   fetch(webAppUrl, {
     method: 'POST',
-    mode: 'cors',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   })
     .then(response => response.json())
@@ -233,7 +231,7 @@ function renderFinance() {
     const renderTransaction = (t) => `
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border);">
             <div>
-                <p style="font-weight: 600; font-size: 0.9rem;">${t.category}</p>
+                <p style="font-weight: 600; font-size: 0.9rem;">${t.category}${t.studentName ? ` - ${t.studentName}` : ''}</p>
                 <p style="font-size: 0.75rem; color: var(--text-dim);">${t.date}</p>
             </div>
             <p style="font-weight: 800; color: ${t.type === 'income' ? '#10b981' : '#f43f5e'};">
@@ -606,10 +604,7 @@ if (studentForm) {
 
         // Sync with Google Sheets
         if (action) {
-            syncWithGoogleSheets({
-                action: action,
-                student: studentData
-            });
+            syncAllStudents();
         }
 
         hideModal('studentModal');
@@ -1212,3 +1207,61 @@ async function syncAllToFirebase() {
     }
 }
 
+function openTransactionModal(type) {
+    document.getElementById('transactionTypeInput').value = type;
+    document.getElementById('transactionModalTitle').innerText = type === 'income' ? 'Add Income' : 'Add Expense';
+    document.getElementById('transactionSubmitBtn').style.background = type === 'income' ? '#10b981' : '#f43f5e';
+    showModal('transactionModal');
+}
+
+const transactionForm = document.getElementById('transactionForm');
+if (transactionForm) {
+    transactionForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const type = document.getElementById('transactionTypeInput').value;
+        const category = document.getElementById('transactionCategoryInput').value;
+        const amount = parseInt(document.getElementById('transactionAmountInput').value);
+        
+        if (!category || !amount) return;
+
+        const transaction = {
+            id: Date.now(),
+            type: type,
+            category: category,
+            amount: amount,
+            date: getTodayDate()
+        };
+
+        state.transactions.unshift(transaction);
+        logActivity(`Added ${type}: ₹${amount} for ${category}`);
+        
+        hideModal('transactionModal');
+        updateDashboardStats();
+        if (state.currentSection === 'finance') renderFinance();
+        saveState();
+        transactionForm.reset();
+    });
+}
+
+function orderWaterCane() {
+    if (!confirm("Do you want to order a Water Cane? This will automatically add a ₹30 expense and open your phone dialer.")) return;
+
+    // 1. Add Expense Transaction
+    const transaction = {
+        id: Date.now(),
+        type: 'expense',
+        category: 'Water Cane',
+        amount: 30,
+        date: getTodayDate()
+    };
+    state.transactions.unshift(transaction);
+    logActivity(`Added expense: ₹30 for Water Cane`);
+    
+    updateDashboardStats();
+    if (state.currentSection === 'finance') renderFinance();
+    saveState();
+
+    // 2. Make Phone call (Change this to the actual water delivery number)
+    const waterDeliveryNumber = "+919786703426"; 
+    window.location.href = `tel:${waterDeliveryNumber}`; 
+}

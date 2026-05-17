@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aathirai Arakkattalai — Premium Academy Portal</title>
+    <title>Aathirai Arakkattalai â€” Premium Academy Portal</title>
     <link rel="icon" type="image/png" href="asset/logo.png" style="width: 50px; height: 50px;">
     <link rel="stylesheet" href="style.css">
     
@@ -37,7 +37,7 @@
         window.googleProvider = new GoogleAuthProvider();
         window.authMethods = { signInWithEmailAndPassword, signInWithPopup, onAuthStateChanged, signOut };
 
-        // Signal that Firebase is ready — fixes GitHub Pages race condition
+        // Signal that Firebase is ready â€” fixes GitHub Pages race condition
         window.dispatchEvent(new CustomEvent('firebaseReady'));
     </script>
 
@@ -74,13 +74,13 @@
                 <div class="form-group">
                     <div class="input-wrapper">
                         <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        <input type="text" id="loginEmail" placeholder="Admin ID or Staff Name" required>
+                        <input type="text" id="loginEmail" placeholder="Admin ID or Staff Name" aria-label="Admin ID or Staff Name" required>
                     </div>
                 </div>
                 <div class="form-group">
                     <div class="input-wrapper">
                         <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                        <input type="password" id="loginPassword" placeholder="Password" required>
+                        <input type="password" id="loginPassword" placeholder="Password" aria-label="Password" required>
                     </div>
                 </div>
                 
@@ -94,7 +94,7 @@
             </form>
 
             <div class="login-footer">
-                &copy; 2024 Aathirai Arakkattalai
+                &copy; 2026 Aathirai Arakkattalai
             </div>
         </div>
     </div>
@@ -384,7 +384,7 @@
                             </div>
                             <div>
                                 <p style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase;">Monthly Fee</p>
-                                <p id="detailMonthlyFee" style="font-weight: 700; color: #10b981;">₹500</p>
+                                <p id="detailMonthlyFee" style="font-weight: 700; color: #10b981;">â‚¹500</p>
                             </div>
                             <div>
                                 <p style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase;">Joined Date</p>
@@ -543,8 +543,12 @@
                         <h1>Finance & Accounting</h1>
                         <p>Manage income, expenses, and fee collection.</p>
                     </div>
-                    <div class="header-actions">
-                        <button class="btn btn-primary">Add Transaction</button>
+                    <div class="header-actions" style="display: flex; gap: 12px; align-items: center;">
+                        <button class="btn btn-secondary" style="padding: 10px 16px; background: rgba(14, 165, 233, 0.1); color: #0ea5e9; border: 1px solid rgba(14, 165, 233, 0.2);" onclick="orderWaterCane()" title="Order Water Cane (â‚¹300)">
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                        </button>
+                        <button class="btn btn-primary" style="background: #10b981; border: none; box-shadow: 0 4px 15px -3px rgba(16, 185, 129, 0.4);" onclick="openTransactionModal('income')">Add Income</button>
+                        <button class="btn btn-primary" style="background: #f43f5e; border: none; box-shadow: 0 4px 15px -3px rgba(244, 63, 94, 0.4);" onclick="openTransactionModal('expense')">Add Expense</button>
                     </div>
                 </header>
 
@@ -552,19 +556,19 @@
                     <div class="card stat-card">
                         <div class="icon" style="color: #10b981;"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
                         <p class="label">Monthly Income</p>
-                        <h2 class="value" id="totalIncome">₹0</h2>
+                        <h2 class="value" id="totalIncome">â‚¹0</h2>
                         <p class="trend up"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> Live</p>
                     </div>
                     <div class="card stat-card">
                         <div class="icon" style="color: #f43f5e;"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
                         <p class="label">Monthly Expenses</p>
-                        <h2 class="value" id="totalExpenses">₹0</h2>
+                        <h2 class="value" id="totalExpenses">â‚¹0</h2>
                         <p class="trend down"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg> Live</p>
                     </div>
                     <div class="card stat-card">
                         <div class="icon" style="color: var(--primary);"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
                         <p class="label">Net Balance</p>
-                        <h2 class="value" id="netBalance">₹0</h2>
+                        <h2 class="value" id="netBalance">â‚¹0</h2>
                         <p class="trend up"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> Live</p>
                     </div>
                 </div>
@@ -611,12 +615,12 @@
                 </header>
                 <div class="card" style="max-width: 600px;">
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Institute Name</label>
-                        <input type="text" value="Aathirai Arakkattalai" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; color: white;">
+                        <label for="settingsInstituteName" style="display: block; margin-bottom: 8px; font-weight: 600;">Institute Name</label>
+                        <input type="text" id="settingsInstituteName" value="Aathirai Arakkattalai" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; color: white;">
                     </div>
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Notification Email</label>
-                        <input type="email" value="admin@aathirai.com" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; color: white;">
+                        <label for="settingsNotificationEmail" style="display: block; margin-bottom: 8px; font-weight: 600;">Notification Email</label>
+                        <input type="email" id="settingsNotificationEmail" value="admin@aathirai.com" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; color: white;">
                     </div>
                     <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border);">
                         <h3 style="color: #f43f5e; margin-bottom: 8px;">Danger Zone</h3>
@@ -639,48 +643,48 @@
                 <input type="hidden" id="editStudentId">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                     <div>
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Full Name</label>
+                        <label for="studentNameInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Full Name</label>
                         <input type="text" id="studentNameInput" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white;">
                     </div>
                     <div>
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Father's Name</label>
+                        <label for="studentFatherNameInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Father's Name</label>
                         <input type="text" id="studentFatherNameInput" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white;">
                     </div>
                 </div>
                 <div style="margin-bottom: 16px;">
-                    <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Previous/Current School</label>
+                    <label for="studentSchoolInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Previous/Current School</label>
                     <input type="text" id="studentSchoolInput" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white;">
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                     <div>
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Primary Phone</label>
+                        <label for="studentPhoneInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Primary Phone</label>
                         <input type="tel" id="studentPhoneInput" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white;">
                     </div>
                     <div>
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Secondary Phone</label>
+                        <label for="studentPhoneSecondaryInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Secondary Phone</label>
                         <input type="tel" id="studentPhoneSecondaryInput" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white;">
                     </div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                     <div>
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Date of Birth</label>
+                        <label for="studentDobInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Date of Birth</label>
                         <input type="date" id="studentDobInput" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white;">
                     </div>
                     <div>
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Joining Date</label>
+                        <label for="studentJoinDateInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Joining Date</label>
                         <input type="date" id="studentJoinDateInput" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white;">
                     </div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                     <div>
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Course</label>
+                        <label for="studentCourseInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Course</label>
                         <select id="studentCourseInput" required style="width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white;">
                             <option value="Computer Class">Computer Class</option>
                             <option value="Tuition">Tuition</option>
                         </select>
                     </div>
                     <div>
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Session Type</label>
+                        <label for="studentSessionInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Session Type</label>
                         <select id="studentSessionInput" style="width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white;">
                             <option value="Morning">Morning</option>
                             <option value="Evening">Evening</option>
@@ -689,28 +693,28 @@
                     </div>
                 </div>
                 <div id="timingSection1">
-                    <label id="timingLabel1" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Session Timing</label>
+                    <label for="studentStartTimeInput" id="timingLabel1" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Session Timing</label>
                     <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 16px;">
-                        <input type="time" id="studentStartTimeInput" style="flex: 1; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white;">
+                        <input type="time" id="studentStartTimeInput" aria-label="Start Time" style="flex: 1; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white;">
                         <span style="color: var(--text-dim);">to</span>
-                        <input type="time" id="studentEndTimeInput" style="flex: 1; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white;">
+                        <input type="time" id="studentEndTimeInput" aria-label="End Time" style="flex: 1; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white;">
                     </div>
                 </div>
                 <div id="timingSection2" style="display: none;">
-                    <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Evening Session Timing</label>
+                    <label for="studentStartTimeInput2" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Evening Session Timing</label>
                     <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 16px;">
-                        <input type="time" id="studentStartTimeInput2" style="flex: 1; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white;">
+                        <input type="time" id="studentStartTimeInput2" aria-label="Evening Start Time" style="flex: 1; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white;">
                         <span style="color: var(--text-dim);">to</span>
-                        <input type="time" id="studentEndTimeInput2" style="flex: 1; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white;">
+                        <input type="time" id="studentEndTimeInput2" aria-label="Evening End Time" style="flex: 1; padding: 12px; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; color: white;">
                     </div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                     <div style="flex: 1;">
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Monthly Fee (₹)</label>
+                        <label for="studentFeeInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Monthly Fee (â‚¹)</label>
                         <input type="number" id="studentFeeInput" value="500" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white;">
                     </div>
                     <div style="flex: 1;">
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Permanent Address</label>
+                        <label for="studentAddressInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Permanent Address</label>
                         <textarea id="studentAddressInput" rows="1" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white; resize: none;"></textarea>
                     </div>
                 </div>
@@ -728,29 +732,29 @@
             <form id="staffForm">
                 <input type="hidden" id="editStaffId">
                 <div style="margin-bottom: 16px;">
-                    <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Full Name</label>
+                    <label for="staffNameInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Full Name</label>
                     <input type="text" id="staffNameInput" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white;">
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                     <div>
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Department</label>
+                        <label for="staffDeptInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Department</label>
                         <input type="text" id="staffDeptInput" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white;">
                     </div>
                     <div>
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Position</label>
+                        <label for="staffPosInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Position</label>
                         <input type="text" id="staffPosInput" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white;">
                     </div>
                 </div>
                 <div style="margin-bottom: 16px;">
-                    <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Email Address</label>
+                    <label for="staffEmailInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Email Address</label>
                     <input type="email" id="staffEmailInput" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white;">
                 </div>
                 <div style="margin-bottom: 16px;">
-                    <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Phone Number</label>
+                    <label for="staffPhoneInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Phone Number</label>
                     <input type="tel" id="staffPhoneInput" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white;">
                 </div>
                 <div style="margin-bottom: 24px;">
-                    <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Login Password</label>
+                    <label for="staffPassInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Login Password</label>
                     <input type="password" id="staffPassInput" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white;" placeholder="e.g. staff123">
                 </div>
                 <div style="display: flex; gap: 12px; justify-content: flex-end;">
@@ -761,6 +765,29 @@
         </div>
     </div>
 
+    <!-- Transaction Modal -->
+    <div id="transactionModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+        <div class="card" style="width: 90%; max-width: 400px; padding: 32px;">
+            <h2 id="transactionModalTitle" style="margin-bottom: 24px;">Add Transaction</h2>
+            <form id="transactionForm">
+                <input type="hidden" id="transactionTypeInput">
+                <div style="margin-bottom: 16px;">
+                    <label for="transactionCategoryInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Category / Description</label>
+                    <input type="text" id="transactionCategoryInput" required style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white;" placeholder="e.g. Donation, Salary, Maintenance">
+                </div>
+                <div style="margin-bottom: 24px;">
+                    <label for="transactionAmountInput" style="display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted);">Amount (â‚¹)</label>
+                    <input type="number" id="transactionAmountInput" required min="1" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white;">
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="hideModal('transactionModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="transactionSubmitBtn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
+
