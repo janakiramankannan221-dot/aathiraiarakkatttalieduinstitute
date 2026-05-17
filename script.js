@@ -1,6 +1,12 @@
 // --- CONFIG ---
 const webAppUrl = 'https://script.google.com/macros/s/AKfycbwyLBLi29sH7uGXbI6BCs_MRDq04r4SErAl3gRgrOOW1cyzxYulVuPtVgMOr1Tq5pS1/exec';
 
+// --- LOCAL AUTH CREDENTIALS ---
+const AUTH_CONFIG = {
+    admin: { user: 'admin', pass: 'admin123', role: 'admin' },
+    staff: { user: 'staff', pass: 'staff123', role: 'staff' }
+};
+
 // --- HELPERS ---
 const getTodayDate = () => new Date().toISOString().split('T')[0];
 
@@ -17,10 +23,16 @@ const saveStateLocalOnly = () => {
 
 
 const syncAllStudents = () => {
-    // Send all student records to Google Sheets for initial sync
     syncWithGoogleSheets({
         action: 'sync_all_students',
         students: state.students
+    });
+};
+
+const syncAllStaff = () => {
+    syncWithGoogleSheets({
+        action: 'sync_all_staff',
+        staff: state.staff
     });
 };
 
@@ -48,8 +60,8 @@ const defaultState = {
         { id: 'STU004', name: 'Meera Nair', fatherName: 'Narayanan', schoolName: 'Govt Girls School', email: 'meera.n@example.com', phone: '+91 98765 00004', phoneSecondary: '+91 98765 00044', dob: '2006-08-05', joinDate: '2024-02-15', session: 'Evening', address: '12 Pearl Heights, Trichy', course: 'UI/UX Design', startTime: '18:00', endTime: '20:00', status: 'Discontinued', attendanceHistory: {} }
     ],
     staff: [
-        { id: 'STF001', name: 'Prof. Rajesh', department: 'Technology', position: 'Head of Dept' },
-        { id: 'STF002', name: 'Dr. Anita', department: 'Science', position: 'Senior Lecturer' }
+        { id: 'STF001', name: 'Prof. Rajesh', department: 'Technology', position: 'Head of Dept', password: 'staff123' },
+        { id: 'STF002', name: 'Dr. Anita', department: 'Science', position: 'Senior Lecturer', password: 'staff123' }
     ],
     transactions: [],
     activities: [
@@ -67,13 +79,6 @@ if (!localStorage.getItem('academyHubState')) {
     syncAllStudents();
     syncAllStaff();
 }
-
-const syncAllStaff = () => {
-    syncWithGoogleSheets({
-        action: 'sync_all_staff',
-        staffMembers: state.staff
-    });
-};
 
 // Ensure state integrity
 state.students.forEach(s => {
@@ -95,11 +100,11 @@ function updateDashboardStats() {
     const totalExpensesEl = document.getElementById('totalExpenses');
     const netBalanceEl = document.getElementById('netBalance');
     
-    if (studentCount) studentCount.innerText = state.students.length.toLocaleString();
+    const activeStudentsToday = state.students.filter(s => s.status !== 'Discontinued');
+    if (studentCount) studentCount.innerText = activeStudentsToday.length.toLocaleString();
     if (staffCount) staffCount.innerText = state.staff.length.toLocaleString();
 
     const todayKey = getTodayDate();
-    const activeStudentsToday = state.students.filter(s => s.status !== 'Discontinued');
     const presentCount = activeStudentsToday.filter(s => {
         let rec = s.attendanceHistory ? s.attendanceHistory[todayKey] : null;
         let status = (typeof rec === 'object' && rec !== null) ? rec.status : rec;
@@ -152,6 +157,11 @@ function renderActivities() {
             </div>
         </div>
     `).join('');
+}
+
+function renderDashboardChart() {
+    // Placeholder — chart is currently static SVG in HTML
+    console.log('Dashboard chart rendered.');
 }
 
 // --- NAVIGATION LOGIC ---
@@ -404,6 +414,9 @@ function renderStudents() {
         return;
     }
 
+    const currentRole = sessionStorage.getItem('academyHubUserRole');
+    const isAdmin = currentRole === 'admin';
+
     studentTableBody.innerHTML = filteredStudents.map(student => `
         <tr>
             <td>
@@ -429,22 +442,22 @@ function renderStudents() {
             </td>
             <td>
                 <div style="display: flex; gap: 8px;">
-                    ${isFeePaid(student) ? 
-                        `<div style="display: flex; align-items: center; gap: 4px; color: #10b981; font-weight: 700; font-size: 0.8rem; padding: 6px 10px; background: rgba(16, 185, 129, 0.1); border-radius: 8px;">
+                    ${isAdmin ? (isFeePaid(student) ? 
+                        `<button class="btn btn-secondary" style="padding: 6px 10px; color: #10b981; border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.1);" onclick="unpayFee('${student.id}')" title="Click to mark as Unpaid">
                             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="3" fill="none"><polyline points="20 6 9 17 4 12"/></svg> Paid
-                        </div>` : 
+                        </button>` : 
                         `<button class="btn btn-secondary" style="padding: 6px 10px; color: var(--primary); border-color: var(--primary-glow);" onclick="collectFee('${student.id}')">Collect ₹${student.monthlyFee || 500}</button>`
-                    }
+                    ) : ''}
                     <a href="tel:${student.phone}" class="btn btn-secondary" style="padding: 6px; border-radius: 8px; color: #10b981;" title="Call Student">
                         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l2.28-2.28a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                     </a>
                     <a href="https://wa.me/${student.phone.replace(/\D/g, '')}" target="_blank" class="btn btn-secondary" style="padding: 6px; border-radius: 8px; color: #25d366;" title="WhatsApp Student">
                         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9L21 3z"/></svg>
                     </a>
-                    <button class="btn btn-secondary" style="padding: 6px 10px;" onclick="editStudent('${student.id}')">Edit</button>
+                    ${isAdmin ? `<button class="btn btn-secondary" style="padding: 6px 10px;" onclick="editStudent('${student.id}')">Edit</button>
                     <button class="btn btn-secondary" style="padding: 6px 10px; color: ${student.status === 'Active' ? '#f43f5e' : '#10b981'}" onclick="toggleStudentStatus('${student.id}')">
                         ${student.status === 'Active' ? 'Archive' : 'Restore'}
-                    </button>
+                    </button>` : ''}
                 </div>
             </td>
         </tr>
@@ -518,7 +531,6 @@ function editStudent(id) {
     document.getElementById('studentNameInput').value = student.name;
     document.getElementById('studentFatherNameInput').value = student.fatherName || '';
     document.getElementById('studentSchoolInput').value = student.schoolName || '';
-    document.getElementById('studentEmailInput').value = student.email || '';
     document.getElementById('studentPhoneInput').value = student.phone || '';
     document.getElementById('studentPhoneSecondaryInput').value = student.phoneSecondary || '';
     document.getElementById('studentDobInput').value = student.dob || '';
@@ -556,7 +568,6 @@ if (studentForm) {
         const name = document.getElementById('studentNameInput').value;
         const fatherName = document.getElementById('studentFatherNameInput').value;
         const schoolName = document.getElementById('studentSchoolInput').value;
-        const email = document.getElementById('studentEmailInput').value;
         const phone = document.getElementById('studentPhoneInput').value;
         const phoneSecondary = document.getElementById('studentPhoneSecondaryInput').value;
         const dob = document.getElementById('studentDobInput').value;
@@ -570,7 +581,7 @@ if (studentForm) {
         const endTime2 = document.getElementById('studentEndTimeInput2').value;
         const monthlyFee = document.getElementById('studentFeeInput').value;
 
-        let studentData = { name, fatherName, schoolName, email, phone, phoneSecondary, dob, joinDate, session, address, course, startTime, endTime, startTime2, endTime2, monthlyFee };
+        let studentData = { name, fatherName, schoolName, phone, phoneSecondary, dob, joinDate, session, address, course, startTime, endTime, startTime2, endTime2, monthlyFee };
         let action = '';
 
         if (id) {
@@ -622,6 +633,7 @@ function renderStaff() {
                         ${member.name.split(' ').map(n => n[0]).join('')}
                     </div>
                     <span style="font-weight: 600;">${member.name}</span>
+                    <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">ID: ${member.id}</span>
                 </div>
             </td>
             <td>${member.department}</td>
@@ -644,6 +656,7 @@ function editStaff(id) {
     document.getElementById('staffPosInput').value = member.position;
     document.getElementById('staffEmailInput').value = member.email || '';
     document.getElementById('staffPhoneInput').value = member.phone || '';
+    document.getElementById('staffPassInput').value = member.password || 'staff123';
 
     showModal('staffModal');
 }
@@ -659,8 +672,9 @@ if (staffForm) {
         const position = document.getElementById('staffPosInput').value;
         const email = document.getElementById('staffEmailInput').value;
         const phone = document.getElementById('staffPhoneInput').value;
+        const password = document.getElementById('staffPassInput').value || 'staff123';
 
-        let staffData = { name, department, position, email, phone };
+        let staffData = { name, department, position, email, phone, password };
         let action = '';
 
         if (id) {
@@ -747,7 +761,6 @@ function viewStudentDetail(id) {
         : `${student.startTime} - ${student.endTime}`;
     
     document.getElementById('detailCourseDisplay').innerText = student.course;
-    document.getElementById('detailEmail').innerText = student.email || 'N/A';
     document.getElementById('detailPhone').innerText = student.phone || 'N/A';
     document.getElementById('detailMonthlyFee').innerText = '₹' + (student.monthlyFee || '500');
     
@@ -789,66 +802,25 @@ function viewStudentDetail(id) {
     document.getElementById('detailEditBtn').onclick = () => editStudent(student.id);
 }
 
-// --- Firebase initialization (called when Firebase module is ready) ---
+// --- Local initialization (skipping Firebase Auth) ---
 function initFirebase() {
-    console.log("Firebase Init Started...");
-    // --- FIREBASE AUTH STATE LISTENER ---
-    if (window.firebaseAuth && window.authMethods) {
-        const { onAuthStateChanged } = window.authMethods;
-                onAuthStateChanged(window.firebaseAuth, (user) => {
-            if (user) {
-                try {
-                    // User is signed in
-                    console.log("User detected:", user.email);
-                    const adminEmails = ['admin@gmail.com', 'aathirai@gmail.com']; // Add specific admin emails here
-                    const userEmail = user.email.toLowerCase();
-                    const isAdmin = (userEmail.includes('admin') || adminEmails.includes(userEmail));
-                    
-                    console.log("Is Admin:", isAdmin);
-
-                    // ENFORCE: Google Sign-in ONLY for Admins
-                    const isGoogle = user.providerData.some(p => p.providerId === 'google.com');
-                    if (isGoogle && !isAdmin) {
-                        console.warn("Access Denied: Non-admin Google account.");
-                        alert('Access Denied: This Google account (' + user.email + ') is not authorized as an administrator.');
-                        window.authMethods.signOut(window.firebaseAuth);
-                        return;
-                    }
-
-                    const role = isAdmin ? 'admin' : 'staff';
-                    
-                    sessionStorage.setItem('academyHubLoggedIn', 'true');
-                    sessionStorage.setItem('academyHubUserRole', role);
-                    sessionStorage.setItem('academyHubUserEmail', user.email);
-                    
-                    document.getElementById('loginScreen').style.display = 'none';
-                    document.getElementById('appContainer').style.display = 'flex';
-                    applyRoleRestrictions(role, user.email);
-                    
-                    const startSection = role === 'staff' ? 'attendance' : (state.currentSection || 'attendance');
-                    switchSection(startSection);
-                } catch (err) {
-                    alert('Error loading application data: ' + err.message);
-                    console.error(err);
-                    
-                    // Reset login button if it got stuck
-                    const submitBtn = document.querySelector('#loginForm button[type="submit"]');
-                    if(submitBtn) {
-                        submitBtn.disabled = false;
-                        submitBtn.innerText = 'Sign In';
-                    }
-                }
-            } else {
-                // User is signed out
-                sessionStorage.removeItem('academyHubLoggedIn');
-                sessionStorage.removeItem('academyHubUserRole');
-                document.getElementById('loginScreen').style.display = 'flex';
-                document.getElementById('appContainer').style.display = 'none';
-            }
-        });
-        console.log('Firebase Auth initialized successfully.');
+    console.log("Local Auth System Initialized...");
+    
+    // Check if already logged in from previous session
+    const isLoggedIn = sessionStorage.getItem('academyHubLoggedIn') === 'true';
+    if (isLoggedIn) {
+        const role = sessionStorage.getItem('academyHubUserRole');
+        const userEmail = sessionStorage.getItem('academyHubUserEmail');
+        
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appContainer').style.display = 'flex';
+        applyRoleRestrictions(role, userEmail);
+        
+        const startSection = role === 'staff' ? 'attendance' : (state.currentSection || 'attendance');
+        switchSection(startSection);
     }
-
+    
+    // We still keep the Realtime DB sync if you are using it for data
     // Setup Firebase Realtime DB sync
     if (window.firebaseDB && window.rtDB) {
         const { ref, onValue } = window.rtDB;
@@ -888,68 +860,82 @@ function initFirebase() {
     }
 }
 
+function quickLogin(type) {
+    const config = AUTH_CONFIG[type];
+    if (!config) return;
+
+    // Set session data
+    sessionStorage.setItem('academyHubLoggedIn', 'true');
+    sessionStorage.setItem('academyHubUserRole', config.role);
+    sessionStorage.setItem('academyHubUserEmail', config.user + "@aathirai.com");
+
+    // UI Feedback
+    const buttons = document.querySelectorAll('#loginActions button');
+    buttons.forEach(b => b.disabled = true);
+    
+    setTimeout(() => {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appContainer').style.display = 'flex';
+        applyRoleRestrictions(config.role, config.user);
+        
+        const startSection = config.role === 'staff' ? 'attendance' : 'dashboard';
+        switchSection(startSection);
+        
+        buttons.forEach(b => b.disabled = false);
+    }, 400);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Login Form Handler — always attach, it will wait for Firebase internally
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
+        loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
+            const userInput = document.getElementById('loginEmail').value.trim().toLowerCase();
+            const passInput = document.getElementById('loginPassword').value.trim();
             const submitBtn = loginForm.querySelector('button[type="submit"]');
 
-            if (window.firebaseAuth && window.authMethods) {
-                const { signInWithEmailAndPassword } = window.authMethods;
-                submitBtn.disabled = true;
-                submitBtn.innerText = 'Signing in...';
-
-                try {
-                    await signInWithEmailAndPassword(window.firebaseAuth, email, pass);
-                    // onAuthStateChanged will handle the rest
-                    // We reset the button text immediately just in case the UI fails to switch
-                    submitBtn.innerText = 'Success!';
-                } catch (error) {
-                    console.error("Login Error:", error);
-                    alert('Login Failed: ' + error.message);
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = 'Sign In';
-                }
+            // Check against hardcoded admin
+            let loggedInUser = null;
+            if (userInput === AUTH_CONFIG.admin.user.toLowerCase() && passInput === AUTH_CONFIG.admin.pass) {
+                loggedInUser = { ...AUTH_CONFIG.admin, displayName: 'Administrator' };
             } else {
-                // Firebase hasn't loaded yet — show a helpful message
-                alert('Firebase is still loading. Please wait a moment and try again.');
+                // Check against staff list - Name only as per user request
+                const staffMember = state.staff.find(s => 
+                    s.name.toLowerCase() === userInput && 
+                    (s.password === passInput || passInput === 'staff123')
+                );
+                
+                if (staffMember) {
+                    loggedInUser = { 
+                        user: staffMember.id, 
+                        role: 'staff', 
+                        displayName: staffMember.name 
+                    };
+                }
+            }
+
+            if (loggedInUser) {
+                submitBtn.innerText = 'Success!';
+                sessionStorage.setItem('academyHubLoggedIn', 'true');
+                sessionStorage.setItem('academyHubUserRole', loggedInUser.role);
+                sessionStorage.setItem('academyHubUserEmail', loggedInUser.displayName);
+
+                setTimeout(() => {
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('appContainer').style.display = 'flex';
+                    applyRoleRestrictions(loggedInUser.role, loggedInUser.user);
+                    switchSection(loggedInUser.role === 'staff' ? 'attendance' : 'dashboard');
+                }, 500);
+            } else {
+                alert('Invalid Username or Password. Please try again.');
+                document.getElementById('password').value = '';
             }
         });
     }
 
-    // Google Login Handler
-    const googleLoginBtn = document.getElementById('googleLoginBtn');
-    if (googleLoginBtn) {
-        googleLoginBtn.addEventListener('click', async () => {
-            console.log("Google Login Button Clicked");
-            if (window.firebaseAuth && window.authMethods && window.googleProvider) {
-                const { signInWithPopup } = window.authMethods;
-                try {
-                    googleLoginBtn.disabled = true;
-                    googleLoginBtn.innerText = 'Connecting...';
-                    
-                    await signInWithPopup(window.firebaseAuth, window.googleProvider);
-                    // onAuthStateChanged in initFirebase will handle the UI switch
-                } catch (error) {
-                    console.error("Google Login Error:", error);
-                    if (error.code !== 'auth/popup-closed-by-user') {
-                        alert('Google Sign-In Failed: ' + error.message);
-                    }
-                    googleLoginBtn.disabled = false;
-                    googleLoginBtn.innerHTML = `
-                        <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/><path fill="none" d="M1 1 23 23"/></svg>
-                        Continue with Google
-                    `;
-                }
-            } else {
-                alert('Firebase is still loading. Please wait a moment.');
-            }
-        });
-    }
+// Google Login Handler (Disabled since using Local Auth)
+// const googleLoginBtn = ...
 
 
 
@@ -1093,6 +1079,34 @@ function isFeePaid(student) {
     return student.lastPaidMonth === currentMonth;
 }
 
+function unpayFee(studentId) {
+    const student = state.students.find(s => s.id === studentId);
+    if (!student) return;
+
+    if (!confirm(`Are you sure you want to mark ${student.name}'s fee as UNPAID? This will reverse their payment status for this month.`)) return;
+
+    student.lastPaidMonth = null;
+
+    // Remove the latest fee transaction for this student this month
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const txIndex = state.transactions.findIndex(t => 
+        t.type === 'income' && 
+        t.category === 'Fee Collection' && 
+        t.studentId === student.id && 
+        t.date.startsWith(currentMonth)
+    );
+
+    if (txIndex !== -1) {
+        state.transactions.splice(txIndex, 1);
+    }
+
+    logActivity(`Reversed fee payment for ${student.name}`);
+    
+    renderStudents();
+    updateDashboardStats();
+    saveState();
+}
+
 function collectFee(studentId) {
     const student = state.students.find(s => s.id === studentId);
     if (!student) return;
@@ -1134,10 +1148,12 @@ function applyRoleRestrictions(role, email) {
     if (nameEl) nameEl.innerText = userEmail || (isAdmin ? 'Administrator' : 'Portal Staff');
     if (roleEl) roleEl.innerText = isAdmin ? 'System Administrator' : 'Staff Member';
 
-    // Navigation restrictions
+    // Navigation restrictions — staff can ONLY access attendance and students (view-only)
     const restrictedSections = ['dashboard', 'staff', 'finance', 'reports', 'settings', 'archive'];
     
-    navLinks.forEach(link => {
+    // Re-query nav links fresh to avoid stale references
+    const allNavLinks = document.querySelectorAll('.nav-link');
+    allNavLinks.forEach(link => {
         const section = link.dataset.section;
         if (!isAdmin && restrictedSections.includes(section)) {
             link.parentElement.style.display = 'none';
@@ -1146,19 +1162,32 @@ function applyRoleRestrictions(role, email) {
         }
     });
 
-    // Action restrictions
+    // Action restrictions — hide all admin-only buttons for staff
     const adminOnlyButtons = document.querySelectorAll('.admin-only');
     adminOnlyButtons.forEach(btn => {
         btn.style.display = isAdmin ? 'flex' : 'none';
     });
+
+    // Re-render students table to apply view-only mode for staff
+    if (typeof renderStudents === 'function') renderStudents();
 }
 
-function resetFinancialData() {
-    if (confirm("Are you sure you want to clear all income and expense records? This cannot be undone.")) {
+function resetAllData() {
+    if (confirm("Are you sure you want to completely erase ALL data (Students, Staff, Attendance, Finance)? This action CANNOT be undone!")) {
+        state.students = [];
+        state.staff = [];
         state.transactions = [];
+        state.activities = [];
+        state.pendingAttendance = {};
+        
         saveState();
-        updateDashboardStats();
-        if (state.currentSection === 'finance') renderFinance();
+        
+        // Sync empty state to sheets if configured
+        syncAllStudents();
+        syncAllStaff();
+        
+        alert("All data has been successfully erased.");
+        location.reload();
     }
 }
 
