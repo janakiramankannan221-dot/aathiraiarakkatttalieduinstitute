@@ -295,14 +295,18 @@ function renderAttendanceSheet() {
             </td>
             <td style="color: var(--text-dim); font-size: 0.85rem;">${timeStr}</td>
             <td>
-                <div style="display: flex; gap: 8px; justify-content: center;">
-                    <button class="btn ${status === 'P' ? 'btn-primary' : 'btn-secondary'}" 
-                            onclick="markAttendance('${student.id}', 'P')" 
-                            style="padding: 6px 12px; min-width: 45px; ${status === 'P' ? 'background: #10b981; border: none;' : ''}">P</button>
+                <div class="attendance-actions">
+                    <button class="btn btn-present ${status === 'P' ? 'active' : ''}" 
+                            onclick="markAttendance('${student.id}', 'P')">
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="3.5" fill="none"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span>Present</span>
+                    </button>
 
-                    <button class="btn ${status === 'A' ? 'btn-primary' : 'btn-secondary'}" 
-                            onclick="markAttendance('${student.id}', 'A')" 
-                            style="padding: 6px 12px; min-width: 45px; ${status === 'A' ? 'background: #f43f5e; border: none;' : ''}">A</button>
+                    <button class="btn btn-absent ${status === 'A' ? 'active' : ''}" 
+                            onclick="markAttendance('${student.id}', 'A')">
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="3.5" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        <span>Absent</span>
+                    </button>
                 </div>
             </td>
         </tr>
