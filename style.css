@@ -609,19 +609,21 @@ tr:hover td {
     
     #quickAttendanceBody tr {
         display: flex;
-        flex-direction: column;
-        background: rgba(255, 255, 255, 0.03);
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.02);
         border: 1px solid var(--border);
-        border-radius: 20px;
-        padding: 16px;
-        margin-bottom: 12px;
+        border-radius: 12px;
+        padding: 8px 12px;
+        margin-bottom: 8px;
         gap: 12px;
         transition: var(--transition);
     }
     
     #quickAttendanceBody tr:hover {
         border-color: var(--border-hover);
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(255, 255, 255, 0.04);
     }
     
     #quickAttendanceBody td {
@@ -629,40 +631,42 @@ tr:hover td {
         align-items: center;
         padding: 0 !important;
         border: none !important;
-        width: 100%;
+        width: auto;
     }
     
-    #quickAttendanceBody td:nth-child(2) {
-        font-size: 0.8rem;
-        color: var(--text-dim);
-        margin-top: -6px;
+    #quickAttendanceBody td:nth-child(1) {
+        flex: 1;
+        min-width: 0;
     }
     
-    #quickAttendanceBody td:nth-child(2)::before {
-        content: "Marked Time: ";
-        font-weight: 600;
-        color: var(--text-muted);
-        margin-right: 4px;
+    .attendance-time-col {
+        display: none !important;
+    }
+    
+    .attendance-time-sub {
+        display: inline-block !important;
     }
     
     #quickAttendanceBody td:nth-child(3) {
-        margin-top: 4px;
+        margin-top: 0;
+        width: auto;
     }
     
     .attendance-actions {
-        width: 100%;
-        gap: 12px;
+        width: auto;
+        gap: 8px;
     }
     
     .attendance-actions button {
-        flex: 1;
-        height: 48px;
-        border-radius: 12px;
-        font-size: 0.95rem;
+        flex: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50% !important;
+        font-size: 0.8rem;
     }
     
     .attendance-actions button span {
-        display: inline;
+        display: none !important;
     }
 }
 
@@ -715,6 +719,10 @@ tr:hover td {
 }
 
 .attendance-actions button span {
+    display: none;
+}
+
+.attendance-time-sub {
     display: none;
 }
 

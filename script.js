@@ -287,13 +287,16 @@ function renderAttendanceSheet() {
         <tr>
             <td>
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; color: var(--primary);">
+                    <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; color: var(--primary); flex-shrink: 0;">
                         ${student.name.split(' ').map(n => n[0]).join('')}
                     </div>
-                    <span style="font-weight: 500;">${student.name}</span>
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-weight: 500; font-size: 0.9rem;">${student.name}</span>
+                        <span class="attendance-time-sub" style="font-size: 0.75rem; color: var(--text-dim); margin-top: 2px;">Marked: ${timeStr}</span>
+                    </div>
                 </div>
             </td>
-            <td style="color: var(--text-dim); font-size: 0.85rem;">${timeStr}</td>
+            <td class="attendance-time-col" style="color: var(--text-dim); font-size: 0.85rem;">${timeStr}</td>
             <td>
                 <div class="attendance-actions">
                     <button class="btn btn-present ${status === 'P' ? 'active' : ''}" 
